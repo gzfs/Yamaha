@@ -17,9 +17,11 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body>
-        <Navbar />
-        <Wrapper>{children}</Wrapper>
-        <Toaster />
+        <Wrapper>
+          <Navbar />
+          {children}
+          <Toaster />
+        </Wrapper>
       </body>
     </html>
   );
