@@ -1,6 +1,7 @@
 "use client";
 
 import { Report } from "@prisma/client";
+import { saveAs } from "file-saver";
 import { useSession } from "next-auth/react";
 import { useEffect, useState } from "react";
 
@@ -28,18 +29,40 @@ export default function Entries() {
           setUserEntries(reportJson);
           return reportJson;
         });
-  }, []);
+  }, [data?.user?.email, status]);
   return (
     <main className="px-5 md:px-10">
       <button
         className="p-3 bg-white text-[#1f3f9b] text-sm font-Outfit rounded-2xl mb-4"
         onClick={() => {
-          fetch("/api/excel", {
-            method: "POST",
-            body: JSON.stringify({
-              userEIN: data?.user?.email,
-            }),
-          });
+          const workbookName = `Hello_${data?.user?.email}_${Date.now()}.xlsx`;
+
+          if (userEntries?.length != 0) {
+            const Excel = require("exceljs");
+
+            const workbook = new Excel.Workbook();
+            const worksheet = workbook.addWorksheet("Sheet1");
+            worksheet.columns = [
+              { header: "ID", key: "ID", width: 50 },
+              { header: "EIN", key: "userEIN", width: 50 },
+              { header: "Forum", key: "Forum" },
+              { header: "Location", key: "Location", width: 50 },
+              { header: "Phenomena", key: "Phenomena", width: 50 },
+              { header: "Hazard Category", key: "HazardCategory", width: 50 },
+              { header: "Hazard", key: "Hazard", width: 50 },
+              { header: "Description", key: "Description", width: 50 },
+              { header: "Image", key: "Image", width: 50 },
+            ];
+            // insert from the second row onwards
+            worksheet.insertRows(userEntries?.length, userEntries);
+            workbook.xlsx.writeBuffer().then(function (data: Blob) {
+              const blob = new Blob([data], {
+                type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+              });
+
+              saveAs(blob, workbookName);
+            });
+          }
         }}
       >
         Export to Excel
@@ -48,7 +71,10 @@ export default function Entries() {
         {userEntries &&
           userEntries.map((userEntry) => {
             return (
-              <div className="flex p-3 border-2 border-white rounded-3xl text-white">
+              <div
+                className="flex p-3 border-2 border-white rounded-3xl text-white"
+                key={userEntry.ID}
+              >
                 <img
                   src={userEntry.Image}
                   alt={userEntry.ID}
