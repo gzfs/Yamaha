@@ -27,6 +27,8 @@ export function SafetyForm({ userEin }: { userEin: string }) {
     resolver: zodResolver(SafetyFormSchema),
   });
 
+  const [disableSubmit, setDisableSumbit] = useState(true);
+
   const { toast } = useToast();
 
   // 2. Define a submit handler.
@@ -45,7 +47,13 @@ export function SafetyForm({ userEin }: { userEin: string }) {
           riskLevel: values.riskLevel,
           user: userEin,
         }),
-      }).then((resp) => {});
+      })
+        .then((resp) => {
+          resp.json();
+        })
+        .then((respJson) => {
+          console.log(respJson);
+        });
     }
   }
 
@@ -112,12 +120,11 @@ export function SafetyForm({ userEin }: { userEin: string }) {
                 className="text-inherit"
                 type="file"
                 onChange={async (e) => {
-                  setUploadImage(
-                    e.target.files ? e.target.files[0] : undefined
-                  );
                   const fileReader = new FileReader();
-                  if (uploadImage)
-                    fileReader.readAsDataURL(uploadImage as File);
+                  if (e.target.files)
+                    fileReader.readAsDataURL(e.target.files[0] as File);
+                  console.log(fileReader.result);
+
                   fileReader.onload = async () => {
                     const fileResult = fileReader.result;
                     if (typeof fileResult === "string") {
@@ -136,16 +143,12 @@ export function SafetyForm({ userEin }: { userEin: string }) {
                           },
                         });
 
-                        toast({
-                          title: "Uploading the Image",
-                        });
+                        setDisableSumbit(true);
 
                         const respBody = await addedSliderImage.json();
 
                         setUploadLink(respBody);
-                        toast({
-                          title: "Uploaded the Image",
-                        });
+                        setDisableSumbit(false);
                       }
                     }
                   };
@@ -155,8 +158,11 @@ export function SafetyForm({ userEin }: { userEin: string }) {
           )}
         />
         <Button
+          disabled={disableSubmit}
           className="bg-black bg-opacity-50"
           onClick={(e) => {
+            console.log("Hello");
+
             onSubmit(form.getValues());
             e.preventDefault();
           }}
